@@ -9,7 +9,11 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-let state = {location: [0, 0], scene: "", map: "rooms", locked: false, variables: {}};
+let state = {location: [0, 0], scene: "", map: "rooms", locked: false, variables: {
+    hasMadeCharacter: false,
+    hasFoundGold: false,
+    hasTakenKey: false
+}};
 let player = {
     name: "",
     gender: 0,
@@ -17,6 +21,9 @@ let player = {
 }
 
 function initialize() {
+    // DEBUG
+    console.log("Whee!" == /[Whee!]/g)
+    // END DEBUG
     createQuestionWithLocation(state.location)
 }
 
@@ -82,10 +89,13 @@ const commands = {
     },
     inventory_add: thing => {
         player.inventory.push(thing);
-        createQuestionWithText(`"${chalk.blue(capitalize(thing.name))}" has been added to your inventory.`);
+        createQuestionWithText(`${chalk.blue(capitalize(thing.name))} has been added to your inventory.\n${thing.description}`);
     },
     inventory_remove: name => {
 
+    },
+    set_var: data => {
+        state.variables[data.var] = data.data;
     },
     scene: id => {
         state.scene = id;
@@ -117,22 +127,72 @@ const commands = {
         player.gender = encodeGender(gender);
         state.scene = "characterCreation4",
         createQuestionWithText(`So you're a ${chalk.green(helpers.getSubjectPronoun(player))}?`);
-    }
+    },
+    confirm_gender: yn => {
+        if (actions.yes.indexOf(yn) !== -1) {
+            state.scene = "characterCreation5",
+            createQuestionWithText(`More stuff?`);
+        }
+        else if (actions.no.indexOf(yn) !== -1) {
+            state.scene = "characterCreation3",
+            createQuestionWithText(`What's your gender?`);
+        }
+        else {
+            createQuestionWithText(`So you're a ${chalk.green(helpers.getSubjectPronoun(player))}?`);
+        }
+    },
 }
 
 function encodeGender(gender) {
-    switch (gender) {
-        case "man" || "guy" || "male" || "boy" || "dude" || 0:
+        if (["man",  "guy", "male", "boy", "dude", 0].indexOf(gender) !== -1) {
             return 0;
-        case "woman" || "gal" || "female" || "girl" || 1:
+        }
+        else if (["woman", "gal", "female", "girl", 1].indexOf(gender) !== -1) {
             return 1;
-        default:
-            return 3;
-    }
+        }
+        else return 2;
 }
 
 function advanceScene() {
 
+}
+
+function showHelp() {
+    createQuestionWithText(
+    `${chalk.underline.green("Help:")}
+
+    In general, type what comes naturally. 
+    For example, ${chalk.magenta("go east")} will do the same thing as ${chalk.magenta("walk to the east")}. 
+    Your command should be understood if the intent is valid.
+    However, you may choose to use the standard words, which will always work.\n\n${chalk.underline("Standard words:")}
+    ${chalk.magenta("go ") + chalk.green("<north|east|south|west>")}: move in a cardinal direction
+    ${chalk.magenta("look at ") + chalk.yellow("[the] ") + chalk.green("<object|myself>")}: look at an object in more detail
+    ${chalk.magenta("talk to ") + chalk.green("<person>")}: initiate dialogue with someone
+    ${chalk.magenta("take ") + chalk.yellow("[the] ") + chalk.green("<object>")}: pick up an object and put it in your inventory
+    ${chalk.magenta("use ") + chalk.yellow("[the] ") + chalk.green("<object>")}: use an item that you have\n\n${chalk.underline("Other commands:")}
+    ${chalk.magenta("inventory|i")}: view the contents of you inventory
+    ${chalk.magenta("help|?")}: show this screen\n\n${chalk.underline("Glossary:")}
+    ${chalk.green("<word>")}: required
+    ${chalk.yellow("[word]")}: optional
+    "|": or`)
+}
+
+function showInventory() {
+    if (player.inventory.length > 0) {
+        let text = chalk.green(" Inventory \n===============\n");
+        let i = 1;
+        for (let item of player.inventory) {
+            text += `${chalk.blue(item.name)}: ${item.shortDescription || item.description}`;
+            text += "\n";
+            if (i >= player.inventory.length) {
+                text += chalk.green("===============\n");
+            }
+        }
+        createQuestionWithText(text);
+    }
+    else {
+        createQuestionWithText("Your inventory is empty!")
+    }
 }
 
 function makeDirectionError() {
@@ -150,16 +210,28 @@ function parseAction(action) {
     try {
         let command = scene.commands[action];
         if(command) {
-            commands[command[0]](command[1]);
+            runCommands(command);
             return;
         }
     } catch (err) {}
     let words = action.toLowerCase().split(/[\s]/g);
     let bank = actions.parse(words);
     let _continue_ = actions.parseContinue(bank);
-    let _direction_ = actions.parseDirection(bank, scene.things);
-    let _look_ = actions.parseLook(bank, scene.things);
-    let _grab_ = actions.parseGrab(bank, scene.things);
+    let _direction_ = actions.parseDirection(bank, f(scene.things));
+    let _look_ = actions.parseLook(bank, f(scene.things), f(player.inventory));
+    let _grab_ = actions.parseGrab(bank, f(scene.things));
+    if (bank[0][1].quit) {
+        process.exit();
+        return;
+    }
+    if (actions.help.indexOf(bank[0][0]) !== -1) {
+        showHelp();
+        return;
+    }
+    if (bank[0][0] == "inventory" || bank[0][0] == "i") {
+        showInventory();
+        return;
+    }
     if (state.locked) {
         if (_continue_ == "advance") {
 
@@ -167,7 +239,7 @@ function parseAction(action) {
     }
     else if (_direction_) {
         if (typeof _direction_[0] == "string") {
-            commands[_direction_[0]](_direction_[1]);
+            runCommands(_direction_);
         }
         else if (typeof _direction_[0] == "number") {
             let newLocation = goDirection(state.location, _direction_, rooms[state.map]);
@@ -182,14 +254,24 @@ function parseAction(action) {
         else makeDirectionError();
     }
     else if (_look_) {
-        commands[_look_[0]](_look_[1]);
+        runCommands(_look_);
     }
     else if (_grab_) {
-        commands[_grab_[0]](_grab_[1]);
+        runCommands(_grab_);
     }
     else {
         createQuestionWithText(chalk.red("I couldn't understand your action."));
     }
+}
+
+function runCommands(command_list) {
+    for (let command of command_list) {
+        commands[command[0]](command[1]);
+    }
+}
+
+function f(d) {
+    return typeof d === "function" ? d(state.variables) : d
 }
 
 initialize();

@@ -3,9 +3,9 @@ let helper = require('./text-helpers');
 
 module.exports = {
     "rooms": [
-        [ "nw", "n",      "ne", "house"],
-        [ "w",  "center", "e",   null  ],
-        [ "sw", "s",       null, null  ]
+        [ "nw", "n",      "ne", "house"   ],
+        [ "w",  "center", "e",  "backyard"],
+        [ "sw", "s",       null, null     ]
     ],
     "house": [
         [  null,      "bath",   null    ],
@@ -14,7 +14,7 @@ module.exports = {
     ],
     "scenes": {
         "nw": {
-            "text": `${chalk.cyan("Welcome to " + chalk.italic("<insert game name here>!"))}\nYou can go ${chalk.magenta("south")} or ${chalk.green("east")} because you are in the ${chalk.blue("north-west")} corner of the map`,
+            "text": `${chalk.cyan("Welcome to " + chalk.underline("TXTGaym Demo!"))}\nYou can go ${chalk.red("south")} from here.\nIf you need help, type ${chalk.magenta("help")} or ${chalk.magenta("?")} for instructions.`,
             "go": [1, 1, 1, 1]
         },
         "n": {
@@ -36,7 +36,26 @@ module.exports = {
             "text": `You are now in the ${chalk.blue("south-east")} corner of the map`
         },
         "sw": {
-            "text": `You are now in the ${chalk.blue("south-west")} corner of the map`
+            "text": `You see the glint of a ${chalk.blue("golden coin")} lying on the ground.\nYou can go either ${chalk.yellow("north")} or ${chalk.green("east")};`,
+            "things": (vars) => {
+                return vars.hasFoundGold ? [] : [
+                    {
+                        name: "gold",
+                        take: [["inventory_add", {name: "coin", description: "A gold coin you found lying on the ground."}], ["set_var", {var: "hasFoundGold", data: true}]],
+                        look: [["describe", "A gold coin you found lying on the ground."]] 
+                    },
+                    {
+                        name: "coin",
+                        take: [["inventory_add", {name: "coin", description: "A gold coin you found lying on the ground."}], ["set_var", {var: "hasFoundGold", data: true}]],
+                        look: [["describe", "A gold coin you found lying on the ground."]] 
+                    },
+                    {
+                        name: "golden",
+                        take: [["inventory_add", {name: "coin", description: "A gold coin you found lying on the ground."}], ["set_var", {var: "hasFoundGold", data: true}]],
+                        look: [["describe", "A gold coin you found lying on the ground."]] 
+                    }
+                ];
+            }
         },
         "center": {
             "text": `You are now in the ${chalk.blue("center")} part of the map`
@@ -46,23 +65,29 @@ module.exports = {
             "things": [
                 {
                     name: "door",
-                    move: ["changeMaps", {location: [1, 0], map: "house"}]
+                    move: [["changeMaps", {location: [1, 0], map: "house"}]]
                 }
             ],
             "commands": {
-                "go inside": ["changeMaps", {location: [1, 0], map: "house"}],
-                "enter": ["changeMaps", {location: [1, 0], map: "house"}]
+                "go inside": [["changeMaps", {location: [1, 0], map: "house"}]],
+                "go in": [["changeMaps", {location: [1, 0], map: "house"}]],
+                "enter": [["changeMaps", {location: [1, 0], map: "house"}]]
             }
         },
         "bedroom": {
             "text": "Hello"
         },
+        "backyard": (vars) => {
+            return vars.canSeeBackyard ? {
+                text: "Backyard!"
+            } : null;
+        },
         "entrance": {
-            "text": "You have entered the house.",
+            "text": `You have entered the house. The foyer is to the ${chalk.green("east")}.`,
             "commands": {
-                "exit": ["changeMaps", {location: [0, 3], map: "rooms"}],
-                "go out": ["changeMaps", {location: [0, 3], map: "rooms"}],
-                "leave": ["changeMaps", {location: [0, 3], map: "rooms"}],
+                "exit": [["changeMaps", {location: [0, 3], map: "rooms"}]],
+                "go out": [["changeMaps", {location: [0, 3], map: "rooms"}]],
+                "leave": [["changeMaps", {location: [0, 3], map: "rooms"}]],
             }
         },
         "foyer": {
@@ -70,35 +95,44 @@ module.exports = {
             "things": [
                 {
                     name: "key",
-                    look: ["describe", `It's a key on the ground! You can ${chalk.blue("pick it up")}.`],
-                    take: ["inventory_add", {name: "key", use: false, description: `It's a key you found on the ground. Probably unlocks the bathroom.`}]
+                    look: [["describe", `It's a key on the ground! You can ${chalk.blue("pick it up")}.`]],
+                    take: [["inventory_add", {name: "key", use: false, description: `It's a key you found on the ground. Probably unlocks the bathroom.`}]]
+                },
+                {
+                    name: "it",
+                    look: [["describe", `It's a key on the ground! You can ${chalk.blue("pick it up")}.`]],
+                    take: [["inventory_add", {name: "key", use: false, description: `It's a key you found on the ground. Probably unlocks the bathroom.`}]]
                 },
                 {
                     name: "something",
-                    look: ["describe", `It's a key on the ground! You can ${chalk.blue("pick it up")}.`],
+                    look: [["describe", `It's a key on the ground! You can ${chalk.blue("pick it up")}.`]],
                 },
                 {
                     name: "ground",
-                    look: ["describe", `It's a key on the ground! You can ${chalk.blue("pick it up")}.`],
+                    look: [["describe", `It's a key on the ground! You can ${chalk.blue("pick it up")}.`]],
+                },
+                {
+                    name: "chandelier",
+                    look: [["describe", `Wow! It's a huge chandelier. It's lit with candles and has three tiers. There are glass beads hanging from it as well as panels diffracting the light.`]],
                 }
             ]
         },
         "bath": {
-            "text": `Whee`,
+            "text": `This is the main-floor bathroom. `,
             "things": [
                 {
                     name: "mirror",
-                    look: ["lock_scene", "characterCreation1"]
+                    look: [["lock_scene", "characterCreation1"]]
                 }
             ],
             "locked": ["inventory", "key"]
         },
         "guest": {
-            "text": `You are in the guest bedroom.`,
+            "text": `You are in the guest bedroom. There's a ${chalk.blue("bed")}.`,
             "things": [
                 {
                     name: "bed",
-                    look: ["describe", ]
+                    look: [["describe", "It's a nice bed."]]
                 }
             ]
         },

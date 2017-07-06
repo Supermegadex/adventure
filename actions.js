@@ -35,13 +35,22 @@ module.exports = {
         }
         else return false;
     },
-    parseLook: (bank, things) => {
+    parseLook: (bank, things, inventory) => {
         if (bank[0][1].look) {
             if (bank[0][1].pos == "verb") {
                 for (let word of bank) {
-                    for (let thing of things) {
-                        if (thing.name === word[0]) {
-                            return thing.look;
+                    if (things) {
+                        for (let thing of things) {
+                            if (thing.name === word[0]) {
+                                return thing.look;
+                            }
+                        }
+                    }
+                    if (inventory) {
+                        for (let item of inventory) {
+                            if (item.name === word[0]) {
+                                return [["describe", item.description]]
+                            }
                         }
                     }
                 }
@@ -109,6 +118,10 @@ module.exports = {
         "n",
         "nah",
         "nay"
+    ],
+    help: [
+        "help",
+        "?"
     ],
     words: {
         "go": {
@@ -194,6 +207,9 @@ module.exports = {
         "next": {
             advance: true,
             pos: "noun"
+        },
+        "quit": {
+            quit: true
         }
     }
 }
