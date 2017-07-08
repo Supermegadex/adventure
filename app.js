@@ -22,7 +22,7 @@ let player = {
 
 function initialize() {
     // DEBUG
-    console.log("Whee!" == /[Whee!]/g)
+    // console.log("Whee!" == /[Whee!]/g)
     // END DEBUG
     createQuestionWithLocation(state.location)
 }
@@ -57,13 +57,18 @@ function goDirection(currentLocation, direction, map) {
                                 currentLocation[1] + direction[1]];
     if (newRequestedLocation[0] < 0) return false;
     if (newRequestedLocation[1] < 0) return false;
-    if (rooms[state.map][newRequestedLocation[0]][newRequestedLocation[1]]) {
-        if (!rooms.scenes[rooms[state.map][newRequestedLocation[0]][newRequestedLocation[1]]].locked) {
+    let room = rooms[state.map][newRequestedLocation[0]][newRequestedLocation[1]];
+    if (room) {
+        let scene = f(rooms.scenes[room]);
+        if (!scene) {
+            return false;
+        }
+        else if (!scene.locked) {
             return newRequestedLocation;
         }
         else {
-            if (rooms.scenes[rooms[state.map][newRequestedLocation[0]][newRequestedLocation[1]]].locked[0] == "inventory") {
-                return checkInventoryForKey(rooms.scenes[rooms[state.map][newRequestedLocation[0]][newRequestedLocation[1]]].locked[1]) ? newRequestedLocation : "locked";
+            if (scene.locked[0] == "inventory") {
+                return checkInventoryForKey(scene.locked[1]) ? newRequestedLocation : "locked";
             }
             return "locked";
         }
@@ -95,7 +100,7 @@ const commands = {
 
     },
     set_var: data => {
-        state.variables[data.var] = data.data;
+        state.variables[data.var] = data.val;
     },
     scene: id => {
         state.scene = id;
@@ -159,8 +164,7 @@ function advanceScene() {
 
 function showHelp() {
     createQuestionWithText(
-    `${chalk.underline.green("Help:")}
-
+    `${chalk.green(" Help:\n==========")}
     In general, type what comes naturally. 
     For example, ${chalk.magenta("go east")} will do the same thing as ${chalk.magenta("walk to the east")}. 
     Your command should be understood if the intent is valid.
@@ -170,11 +174,12 @@ function showHelp() {
     ${chalk.magenta("talk to ") + chalk.green("<person>")}: initiate dialogue with someone
     ${chalk.magenta("take ") + chalk.yellow("[the] ") + chalk.green("<object>")}: pick up an object and put it in your inventory
     ${chalk.magenta("use ") + chalk.yellow("[the] ") + chalk.green("<object>")}: use an item that you have\n\n${chalk.underline("Other commands:")}
-    ${chalk.magenta("inventory|i")}: view the contents of you inventory
+    ${chalk.magenta("inventory|i")}: view the contents of your inventory
+    ${chalk.magenta("quit")}: quit the game
     ${chalk.magenta("help|?")}: show this screen\n\n${chalk.underline("Glossary:")}
     ${chalk.green("<word>")}: required
     ${chalk.yellow("[word]")}: optional
-    "|": or`)
+    "|": or\n${chalk.green("==========")}\n`)
 }
 
 function showInventory() {
@@ -187,6 +192,7 @@ function showInventory() {
             if (i >= player.inventory.length) {
                 text += chalk.green("===============\n");
             }
+            i++;
         }
         createQuestionWithText(text);
     }

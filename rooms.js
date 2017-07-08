@@ -41,17 +41,17 @@ module.exports = {
                 return vars.hasFoundGold ? [] : [
                     {
                         name: "gold",
-                        take: [["inventory_add", {name: "coin", description: "A gold coin you found lying on the ground."}], ["set_var", {var: "hasFoundGold", data: true}]],
+                        take: [["inventory_add", {name: "coin", description: "A gold coin you found lying on the ground."}], ["set_var", {var: "hasFoundGold", val: true}]],
                         look: [["describe", "A gold coin you found lying on the ground."]] 
                     },
                     {
                         name: "coin",
-                        take: [["inventory_add", {name: "coin", description: "A gold coin you found lying on the ground."}], ["set_var", {var: "hasFoundGold", data: true}]],
+                        take: [["inventory_add", {name: "coin", description: "A gold coin you found lying on the ground."}], ["set_var", {var: "hasFoundGold", val: true}]],
                         look: [["describe", "A gold coin you found lying on the ground."]] 
                     },
                     {
                         name: "golden",
-                        take: [["inventory_add", {name: "coin", description: "A gold coin you found lying on the ground."}], ["set_var", {var: "hasFoundGold", data: true}]],
+                        take: [["inventory_add", {name: "coin", description: "A gold coin you found lying on the ground."}], ["set_var", {var: "hasFoundGold", val: true}]],
                         look: [["describe", "A gold coin you found lying on the ground."]] 
                     }
                 ];
@@ -92,30 +92,38 @@ module.exports = {
         },
         "foyer": {
             "text": `You have entered the foyer. It is grand, with a huge ${chalk.blue("chandelier")} hanging from the ceiling.\nTo the ${chalk.green("east")} is a staircase, to the ${chalk.yellow("north")} is a bathroom, and to the ${chalk.red("south")} is a guest bedroom.\nYou can see something on the ground twinkling.`,
-            "things": [
-                {
-                    name: "key",
-                    look: [["describe", `It's a key on the ground! You can ${chalk.blue("pick it up")}.`]],
-                    take: [["inventory_add", {name: "key", use: false, description: `It's a key you found on the ground. Probably unlocks the bathroom.`}]]
-                },
-                {
-                    name: "it",
-                    look: [["describe", `It's a key on the ground! You can ${chalk.blue("pick it up")}.`]],
-                    take: [["inventory_add", {name: "key", use: false, description: `It's a key you found on the ground. Probably unlocks the bathroom.`}]]
-                },
-                {
-                    name: "something",
-                    look: [["describe", `It's a key on the ground! You can ${chalk.blue("pick it up")}.`]],
-                },
-                {
-                    name: "ground",
-                    look: [["describe", `It's a key on the ground! You can ${chalk.blue("pick it up")}.`]],
-                },
-                {
-                    name: "chandelier",
-                    look: [["describe", `Wow! It's a huge chandelier. It's lit with candles and has three tiers. There are glass beads hanging from it as well as panels diffracting the light.`]],
-                }
-            ]
+            "things": vars => {
+                let look = [["describe", `It's a key on the ground! You can ${chalk.blue("pick it up")}.`]];
+                let take = [["inventory_add", {name: "key", use: false, description: `It's a key you found on the ground. Probably unlocks the bathroom.`}], ["set_var", {var: "hasTakenKey", val: true}]];
+                let key = vars.hasTakenKey ? [] : [
+                    {
+                        name: "key",
+                        take: take,
+                        look: look
+                    },
+                    {
+                        name: "it",
+                        take: take,
+                        look: look
+                    },
+                    {
+                        name: "something",
+                        take: take,
+                        look: look
+                    },
+                    {
+                        name: "ground",
+                        take: take,
+                        look: look
+                    }
+                ]
+                return [
+                    {
+                        name: "chandelier",
+                        look: [["describe", `Wow! It's a huge chandelier. It's lit with candles and has three tiers. There are glass beads hanging from it as well as panels diffracting the light.`]],
+                    }
+                ].concat(key);
+            }
         },
         "bath": {
             "text": `This is the main-floor bathroom. `,
