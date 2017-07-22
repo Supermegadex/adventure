@@ -12,6 +12,10 @@ module.exports = {
         [ "entrance", "foyer", "stairs" ],
         [  null,      "guest",  null    ]
     ],
+    "ben": [
+        [ "fire",  ],
+        [],
+    ],
     "scenes": {
         "nw": {
             "text": `${chalk.cyan("Welcome to " + chalk.underline("TXTGaym Demo!"))}\nYou can go ${chalk.red("south")} from here.\nIf you need help, type ${chalk.magenta("help")} or ${chalk.magenta("?")} for instructions.`,
