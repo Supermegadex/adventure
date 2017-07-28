@@ -3,6 +3,7 @@ let rooms = require('./rooms');
 let actions = require("./actions");
 let chalk = require('chalk');
 let helpers = require('./text-helpers');
+let strings = require('./strings');
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -17,14 +18,23 @@ let state = {location: [0, 0], scene: "", map: "rooms", locked: false, variables
 let player = {
     name: "",
     gender: 0,
-    inventory: []
+    inventory: [],
+    background: 0,
+    stats: {
+        str: 1,
+        dex: 1,
+        wis: 1,
+        int: 1,
+        con: 1,
+        cha: 1,
+    }
 }
 
 function initialize() {
     // DEBUG
     // console.log("Whee!" == /[Whee!]/g)
     // END DEBUG
-    createQuestionWithLocation(state.location)
+    createQuestionWithLocation(state.location);
 }
 
 function createQuestionWithLocation(location) {
@@ -118,7 +128,7 @@ const commands = {
     confirm_name: yn => {
         if (actions.yes.indexOf(yn) !== -1) {
             state.scene = "characterCreation3",
-            createQuestionWithText(`Are you a man or a woman?`);
+            createQuestionWithText(`Are you a man, a woman, or something else?`);
         }
         else if (actions.no.indexOf(yn) !== -1) {
             state.scene = "characterCreation1",
@@ -131,25 +141,97 @@ const commands = {
     enter_gender: gender => {
         player.gender = encodeGender(gender);
         state.scene = "characterCreation4",
-        createQuestionWithText(`So you're a ${chalk.green(helpers.getSubjectPronoun(player))}?`);
+        createQuestionWithText(`So you go by ${chalk.green(helpers.getSubjectPronoun(player))}?`);
     },
     confirm_gender: yn => {
         if (actions.yes.indexOf(yn) !== -1) {
             state.scene = "characterCreation5",
-            createQuestionWithText(`More stuff?`);
+            createQuestionWithText(strings.choose_background);
         }
         else if (actions.no.indexOf(yn) !== -1) {
             state.scene = "characterCreation3",
             createQuestionWithText(`What's your gender?`);
         }
         else {
-            createQuestionWithText(`So you're a ${chalk.green(helpers.getSubjectPronoun(player))}?`);
+            createQuestionWithText(`So you identify as ${chalk.green(helpers.getSubjectPronoun(player))}?`);
+        }
+    },
+    enter_bg: bg => {
+        player.background = bg;
+        let bgtxt = "";
+        let fail = false;
+        switch (player.background) {
+            case "0":
+                bgtxt = strings.confirm_background_str;
+                break;
+            case "1":
+                bgtxt = strings.confirm_background_dex;
+                break;
+            case "2":
+                bgtxt = strings.confirm_background_con;
+                break;
+            case "3":
+                bgtxt = "boop\ny/n?"
+                break;
+            case "4":
+                bgtxt = "boop\ny/n?"
+                break;
+            case "5":
+                bgtxt = "boop\ny/n?"
+                break;
+            default:
+                fail = true;
+                bgtxt = chalk.red("That's not a valid choice!")
+        }
+        if (!fail) {
+            state.scene = "characterCreation6";
+        }
+        createQuestionWithText(bgtxt);
+    },
+    confirm_bg: yn => {
+        if (actions.yes.indexOf(yn) !== -1) {
+            applyBackgroundPerk(2)
+            state.scene = "characterCreation7",
+            createQuestionWithText(strings.choose_background);
+        }
+        else if (actions.no.indexOf(yn) !== -1) {
+            state.scene = "characterCreation5",
+            createQuestionWithText(`What's your gender?`);
+        }
+        else {
+            createQuestionWithText(commands.enter_bg(player.background));
         }
     },
 }
 
+function applyBackgroundPerk(amount) {
+    switch (player.background) {
+        case "0":
+            player.stats.str += amount;
+            break;
+        case "1":
+            player.stats.str += amount;
+            break;
+        case "2":
+            player.stats.str += amount;
+            break;
+        case "3":
+            player.stats.str += amount;
+            break;
+        case "4":
+            player.stats.str += amount;
+            break;
+        case "5":
+            player.stats.str += amount;
+            break;
+        default:
+            fail = true;
+            bgtxt = chalk.red("That's not a valid choice!")
+    }
+}
+
 function encodeGender(gender) {
-        if (["man",  "guy", "male", "boy", "dude", 0].indexOf(gender) !== -1) {
+        if (["man", "guy", "male", "boy", "dude", 0].indexOf(gender) !== -1) {
             return 0;
         }
         else if (["woman", "gal", "female", "girl", 1].indexOf(gender) !== -1) {

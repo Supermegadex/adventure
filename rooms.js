@@ -19,7 +19,10 @@ module.exports = {
     "scenes": {
         "nw": {
             "text": `${chalk.cyan("Welcome to " + chalk.underline("TXTGaym Demo!"))}\nYou can go ${chalk.red("south")} from here.\nIf you need help, type ${chalk.magenta("help")} or ${chalk.magenta("?")} for instructions.`,
-            "go": [1, 1, 1, 1]
+            "go": [1, 1, 1, 1],
+            "commands": {
+                "cheat": [["changeMaps", {location: [1, 1], map: "house"}]],
+            }
         },
         "n": {
             "text": `You are now in the ${chalk.blue("north")} part of the map`
@@ -166,6 +169,14 @@ module.exports = {
         "characterCreation4": {
             text: "Confirm your gender.",
             action: ["confirm_gender"]
-        }
+        },
+        "characterCreation5": {
+            text: "Enter your background.",
+            action: ["enter_bg"]
+        },
+        "characterCreation6": {
+            text: "Confirm your background.",
+            action: ["confirm_bg"]
+        },
     }
 }

@@ -39,7 +39,7 @@ module.exports = {
         if (bank[0][1].look) {
             if (bank[0][1].pos == "verb") {
                 for (let word of bank) {
-                    if (things) {
+                    if (typeof things === "object") {
                         for (let thing of things) {
                             if (thing.name === word[0]) {
                                 return thing.look;
